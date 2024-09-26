@@ -21,7 +21,7 @@ app.get("/stop", (req, res) => {
   streamResponse.write(`data: { "data": "stop-recording" }\n\n`);
 });
 
-app.get("/record", (req, res) => {
+app.post("/record", (req, res) => {
   if (!streamResponse) return;
   streamResponse.write(`data: { "data": ${JSON.stringify(req.body)} }\n\n`);
 });
