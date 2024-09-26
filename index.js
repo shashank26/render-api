@@ -1,6 +1,7 @@
 const express = require("express");
 
 const app = express();
+app.use(express.json());
 const port = 3000;
 const ws = require("express-ws")(app);
 
@@ -11,16 +12,18 @@ app.get("/", (req, res) => {
 });
 
 app.get("/start", (req, res) => {
-  console.log("start");
+  if(!streamResponse) return;
+  streamResponse.write(`data: { "data": "start-recording" }\n\n`);
 });
 
 app.get("/stop", (req, res) => {
-  console.log("stop");
+  if(!streamResponse) return;
+  streamResponse.write(`data: { "data": "stop-recording" }\n\n`);
 });
 
 app.get("/record", (req, res) => {
   if (!streamResponse) return;
-  streamResponse.write(`data: { "data": "hello" }\n\n`);
+  streamResponse.write(`data: { "data": ${JSON.stringify(req.body)} }\n\n`);
 });
 
 app.get("/stream", (req, res) => {
