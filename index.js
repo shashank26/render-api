@@ -14,16 +14,25 @@ app.get("/", (req, res) => {
 app.get("/start", (req, res) => {
   if(!streamResponse) return;
   streamResponse.write(`data: { "data": "start-recording" }\n\n`);
+  res.json({
+    ok: true
+  });
 });
 
 app.get("/stop", (req, res) => {
   if(!streamResponse) return;
   streamResponse.write(`data: { "data": "stop-recording" }\n\n`);
+  res.json({
+    ok: true
+  });
 });
 
 app.post("/record", (req, res) => {
   if (!streamResponse) return;
   streamResponse.write(`data: { "data": ${JSON.stringify(req.body)} }\n\n`);
+  res.json({
+    ok: true
+  });
 });
 
 app.get("/stream", (req, res) => {
