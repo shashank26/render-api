@@ -13,7 +13,8 @@ app.get("/", (req, res) => {
 
 app.get("/start", (req, res) => {
   if(!streamResponse) return;
-  streamResponse.write(`data: { "data": "start-recording" }\n\n`);
+  const data = JSON.stringify({ data: 'start-recording' });
+  streamResponse.write(`data: ${data}\n\n`);
   res.json({
     ok: true
   });
@@ -21,7 +22,8 @@ app.get("/start", (req, res) => {
 
 app.get("/stop", (req, res) => {
   if(!streamResponse) return;
-  streamResponse.write(`data: { "data": "stop-recording" }\n\n`);
+  const data = JSON.stringify({ data: 'stop-recording' });
+  streamResponse.write(`data: ${data}\n\n`);
   res.json({
     ok: true
   });
@@ -29,7 +31,8 @@ app.get("/stop", (req, res) => {
 
 app.post("/record", (req, res) => {
   if (!streamResponse) return;
-  streamResponse.write(`data: { "data": ${JSON.stringify(req.body)} }\n\n`);
+  const data = { data: req.body }; 
+  streamResponse.write(`data: ${JSON.stringify(data)}\n\n`);
   res.json({
     ok: true
   });
