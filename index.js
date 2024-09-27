@@ -6,6 +6,7 @@ const port = 3000;
 const ws = require("express-ws")(app);
 
 let streamResponse = null;
+let recordStream = null;
 
 app.get("/", (req, res) => {
   res.send("Hello World!");
@@ -30,12 +31,35 @@ app.get("/stop", (req, res) => {
 });
 
 app.post("/record", (req, res) => {
-  if (!streamResponse) return;
+  if (!recordStream) return;
   const data = { data: req.body }; 
-  streamResponse.write(`data: ${JSON.stringify(data)}\n\n`);
+  recordStream.write(`data: ${JSON.stringify(data)}\n\n`);
   res.json({
     ok: true
   });
+});
+
+app.get('/record-event', (req, res) => {
+
+  res.writeHead(200, {
+    Connection: "keep-alive",
+    "Cache-Control": "no-cache",
+    "Content-Type": "text/event-stream",
+  });
+
+  recordStream = res;
+
+  let counter = 0;
+  const interval = setInterval(() => {
+    const chunk = JSON.stringify({ recordchunk: counter++ });
+    res.write(`data: ${chunk}\n\n`);
+  }, 3000);
+
+  res.on("close", () => {
+    clearInterval(interval);
+    res.end();
+  });
+
 });
 
 app.get("/stream", (req, res) => {
