@@ -1,88 +1,49 @@
-const express = require("express");
+import express from 'express';
+import { createServer } from 'http';
+import { WebSocketServer } from 'ws'; 
 
 const app = express();
+const httpServer = createServer(app);
+const wss = new WebSocketServer({ server: httpServer });
+
 app.use(express.json());
-const port = 3000;
-const ws = require("express-ws")(app);
 
-let streamResponse = null;
-let recordStream = null;
+app.get('/', (req, res) => {
+    res.send('HEllo');
+})
 
-app.get("/", (req, res) => {
-  res.send("Hello World!");
+app.post('/test', (req, res) => {
+    console.log(JSON.parse(req.body));
+    res.json({
+        data: 'ok'
+    });
 });
 
-app.get("/start", (req, res) => {
-  if(!streamResponse) return;
-  const data = JSON.stringify({ data: 'start-recording' });
-  streamResponse.write(`data: ${data}\n\n`);
-  res.json({
-    ok: true
-  });
-});
+const clients = new Map();
 
-app.get("/stop", (req, res) => {
-  if(!streamResponse) return;
-  const data = JSON.stringify({ data: 'stop-recording' });
-  streamResponse.write(`data: ${data}\n\n`);
-  res.json({
-    ok: true
-  });
-});
+wss.on('connection', (ws) => {
 
-app.post("/record", (req, res) => {
-  if (!recordStream) return;
-  const data = { data: req.body }; 
-  recordStream.write(`data: ${JSON.stringify(data)}\n\n`);
-  res.json({
-    ok: true
-  });
-});
+    ws.on('message', (msg) => {
+        const parsedMessage = JSON.parse(msg);
+        const { type, channel, message, to } = parsedMessage;
+        console.log(parsedMessage);
+        if (type === 'subscribe') {
+            clients.set(channel, ws);
+            return;
+        } 
+        if (!clients.get(to)) {
+            console.log('no clients found');
+            return;
+        }
+        console.log('sending to ', to, ' message: ', message, ' from: ', channel);
+        clients.get(to).send(JSON.stringify(message));
+    })
 
-app.get('/record-event', (req, res) => {
+    ws.on('disconnect', () => {
+        console.log('disconnected');
+    })
+})
 
-  res.writeHead(200, {
-    Connection: "keep-alive",
-    "Cache-Control": "no-cache",
-    "Content-Type": "text/event-stream",
-  });
-
-  recordStream = res;
-
-  let counter = 0;
-  const interval = setInterval(() => {
-    const chunk = JSON.stringify({ recordchunk: counter++ });
-    res.write(`data: ${chunk}\n\n`);
-  }, 3000);
-
-  res.on("close", () => {
-    clearInterval(interval);
-    res.end();
-  });
-
-});
-
-app.get("/stream", (req, res) => {
-  res.writeHead(200, {
-    Connection: "keep-alive",
-    "Cache-Control": "no-cache",
-    "Content-Type": "text/event-stream",
-  });
-
-  streamResponse = res;
-
-  let counter = 0;
-  const interval = setInterval(() => {
-    const chunk = JSON.stringify({ chunk: counter++ });
-    res.write(`data: ${chunk}\n\n`);
-  }, 3000);
-
-  res.on("close", () => {
-    clearInterval(interval);
-    res.end();
-  });
-});
-
-app.listen(port, () => {
-  console.log(`Example app listening on port ${port}`);
+httpServer.listen(3000, () => {
+    console.log('Server is running on port 3000');
 });
